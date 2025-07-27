@@ -3,6 +3,7 @@
 # env
 env.ts
 env-vars.ts
+.env
 
 # dependencies
 node_modules/
