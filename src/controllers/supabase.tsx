@@ -85,6 +85,7 @@ export class RNSB {
     ) {
       const ipAddress = debuggerHost.split(":")[0];
       base = `http://${ipAddress}:3000`;
+      console.log("using local backend with ip:", base);
     } else if (
       process.env.EXPO_PUBLIC_PROD_BACKEND_URL ??
       EXPO_PUBLIC_PROD_BACKEND_URL
@@ -92,6 +93,11 @@ export class RNSB {
       base =
         process.env.EXPO_PUBLIC_PROD_BACKEND_URL ??
         EXPO_PUBLIC_PROD_BACKEND_URL;
+      console.log("using remote backend with ip:", base);
+    } else {
+      console.error(
+        'No backend found. Set EXPO_PUBLIC_PROD_BACKEND_URL to the backend api or run the server locally and set EXPO_PUBLIC_ENVIRONMENT to "local"',
+      );
     }
     const url = new URL(path, base);
     return url.href;
@@ -738,12 +744,28 @@ export class RNSB {
       message.value,
     );
     console.log("RNSB", "Generated message: ", messageString);
-    const signature = await options.messageSigner(messageBytes);
-    console.log(
-      "RNSB",
-      "Signature:",
-      Buffer.from(signature).toString("base64"),
-    );
+    let signature: Uint8Array;
+    try {
+      signature = await options.messageSigner(messageBytes);
+      console.log(
+        "RNSB",
+        "Signature:",
+        Buffer.from(signature).toString("base64"),
+      );
+    } catch (e) {
+      console.error(
+        "RNSB",
+        "An error happened during message signing",
+        `${JSON.stringify(e)}`,
+      );
+      return {
+        value: null,
+        error:
+          "RNSB" +
+          "An error happened during message signing" +
+          `${JSON.stringify(e)}`,
+      };
+    }
     return await RNSB.signInWithSignedMessage(messageBytes, signature);
   }
 
