@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "build": "npx eas build --profile development --platform android --local --clear-cache",
     "build:preview": "npx eas build -p android --profile preview --local --clear-cache",
-    "build:prod": "npx eas build -p android --profile production --local --clear-cache",
+    "build:prod": "(grep -v '^src/env-vars.ts$' .gitignore > .gitignore.tmp && mv .gitignore.tmp .gitignore) && npx eas build -p android --profile production --local --clear-cache && echo 'src/env-vars.ts' >> .gitignore",
     "install:prod": "bundletool build-apks --bundle=$(ls build-*.aab | sort -V | tail -n1) --output=prod.apks --mode=universal --ks @davidcks__lea-expo.jks --ks-key-alias 6ffd20fdab7ff7916ba390a529692cef && unzip -o prod.apks universal.apk && rm prod.apks && mv -f universal.apk builds/universal.apk && adb install -r builds/universal.apk",
     "build:remote": "npx eas build --profile development --platform android",
     "macos:list-emulators": "~/Library/Android/sdk/emulator/emulator -list-avds",

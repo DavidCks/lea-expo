@@ -2,7 +2,6 @@
 
 # env
 env.ts
-env-vars.ts
 .env
 
 # dependencies
@@ -41,3 +40,4 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+src/env-vars.ts
