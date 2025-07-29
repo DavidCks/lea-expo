@@ -417,7 +417,7 @@ const Player = ({
         trackRef={mediaSource.video}
         style={{
           display: "flex",
-          height: "70%",
+          height: "76%",
           width: "100%",
           paddingBottom: 100,
         }}
