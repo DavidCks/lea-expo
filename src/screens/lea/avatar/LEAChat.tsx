@@ -11,8 +11,7 @@ import { chatModeNotifier } from "../state/chatMode";
 import Markdown from "react-native-markdown-display";
 import { color } from "@/src/colors";
 import { BlurView } from "expo-blur";
-import FadeIn from "@components/animated/fade-in";
-import { Avatar, AvatarEventSpeechEndData } from "@/src/lib/avatar/avatar";
+import { Avatar } from "@/src/lib/avatar/avatar";
 
 const LEAChat = ({
   avatar,

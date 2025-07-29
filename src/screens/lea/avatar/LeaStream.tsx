@@ -268,11 +268,12 @@ const LeaImpl = () => {
           <Credits />
         </View>
         {/* Chat Panel - Bottom on mobile, left on desktop */}
-        <View className="absolute w-full h-1/8 flex-col z-10">
-          <View className="flex-1 overflow-hidden w-full ">
-            <View className="w-full rounded-4xl flex-col flex-1">
+        <View className="absolute w-full h-1/4 top-14 flex-col z-10">
+          <View className="h-full overflow-hidden w-full">
+            <View className="w-full rounded-4xl flex-col h-full">
               <Animated.View
                 style={{
+                  height: "100%",
                   opacity: chatOpacity,
                 }}
               >
@@ -281,8 +282,10 @@ const LeaImpl = () => {
               </Animated.View>
             </View>
           </View>
+        </View>
 
-          {/* Chat Input */}
+        {/* Chat Input */}
+        <View className="absolute w-full h-1/8 bottom-0 flex-col z-10">
           <LEAChatInput
             avatar={avatar}
             onTextSubmit={handleTextSubmit}
