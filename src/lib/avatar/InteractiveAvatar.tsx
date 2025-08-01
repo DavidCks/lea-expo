@@ -5,6 +5,7 @@ import {
   RemoteTrack,
   Track,
 } from "livekit-client";
+import { Keyboard, KeyboardEvent } from "react-native";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
@@ -400,6 +401,22 @@ const Player = ({
   // }, [mediaSource.audio]);
   const videoOpacity = useSharedValue(0);
 
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true),
+    );
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false),
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   useEffect(() => {
     setTimeout(() => {
       videoOpacity.value = smooth(1, 33);
@@ -417,7 +434,7 @@ const Player = ({
         trackRef={mediaSource.video}
         style={{
           display: "flex",
-          height: "76%",
+          height: keyboardVisible ? "100%" : "76%",
           width: "100%",
           paddingBottom: 100,
         }}

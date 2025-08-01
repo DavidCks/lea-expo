@@ -27,6 +27,7 @@ const SignInSelection = ({
       <Text
         style={{
           paddingBlock: dimensions.height / 10,
+          fontSize: dimensions.width / 16,
         }}
         className="text-3xl flex-1 text-center flex justify-self-center font-bold text-white"
       >
@@ -44,7 +45,15 @@ const SignInSelection = ({
           marginBlock: 12,
         }}
       >
-        <Text className="text-2xl text-black font-bold">Login</Text>
+        <Text
+          style={{
+            fontSize: dimensions.width / 20,
+            lineHeight: dimensions.width / 14,
+          }}
+          className=" text-black font-bold"
+        >
+          Login
+        </Text>
       </Button>
       <Button
         onPress={() => {
@@ -60,7 +69,15 @@ const SignInSelection = ({
           borderWidth: 2,
         }}
       >
-        <Text className="text-2xl text-white font-bold">Sign Up</Text>
+        <Text
+          style={{
+            fontSize: dimensions.width / 20,
+            lineHeight: dimensions.width / 14,
+          }}
+          className=" text-white font-bold"
+        >
+          Sign Up
+        </Text>
       </Button>
     </>
   );

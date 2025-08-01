@@ -4,14 +4,17 @@ import { MessageListStore, newMessage } from "./type";
 export const leaMessagesNotifier = create<MessageListStore>((set) => ({
   value: [],
   setValue: (value) => set({ value: value }),
-  addValue: (message, isUser, messageId) =>
+  addValue: (message, isUser, messageId) => {
+    if (!message.trim()) return; // 🛑 Prevent empty remote updates
     set((s) => ({
       value: [...s.value, newMessage(message, isUser, messageId)],
-    })),
-  addToLastUserValue: (value, messageId) =>
+    }));
+  },
+  addToLastUserValue: (value, messageId) => {
+    if (!value.trim()) return; // 🛑 Prevent empty remote updates
     set((s) => {
       const lastUserValueIndex = s.value.findLastIndex(
-        (m) => m.isUser && m.messageId === messageId
+        (m) => m.isUser && m.messageId === messageId,
       );
       if (lastUserValueIndex != -1) {
         const lastUserMessage = s.value.at(lastUserValueIndex)!.message;
@@ -27,11 +30,13 @@ export const leaMessagesNotifier = create<MessageListStore>((set) => ({
           value: [...s.value, newMessage(value, true, messageId)],
         };
       }
-    }),
-  addToLastRemoteValue: (value, messageId) =>
+    });
+  },
+  addToLastRemoteValue: (value, messageId) => {
+    if (!value.trim()) return; // 🛑 Prevent empty remote updates
     set((s) => {
       const lastRemoteValueIndex = s.value.findLastIndex(
-        (m) => !m.isUser && m.messageId === messageId
+        (m) => !m.isUser && m.messageId === messageId,
       );
       if (lastRemoteValueIndex != -1) {
         const lastRemoteMessage = s.value.at(lastRemoteValueIndex)!.message;
@@ -47,12 +52,14 @@ export const leaMessagesNotifier = create<MessageListStore>((set) => ({
           value: [...s.value, newMessage(value, false, messageId)],
         };
       }
-    }),
+    });
+  },
   updateLastOrAddRemoteValue: (
     newVal: string,
     messageId: string,
-    predicate: (prevVal: string, messageId: string) => boolean
-  ) =>
+    predicate: (prevVal: string, messageId: string) => boolean,
+  ) => {
+    if (!newVal.trim()) return; // 🛑 Prevent empty remote updates
     set((s) => {
       const lastRemoteValueIndex = s.value.findLastIndex((m) => !m.isUser);
       if (lastRemoteValueIndex === -1) {
@@ -74,6 +81,7 @@ export const leaMessagesNotifier = create<MessageListStore>((set) => ({
       return {
         value: [...s.value, newMessage(newVal, false, messageId)],
       };
-    }),
+    });
+  },
   resetValue: () => set({ value: [] }),
 }));
