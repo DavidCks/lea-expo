@@ -11,7 +11,7 @@ import {
   KeyboardEvent,
   useWindowDimensions,
 } from "react-native";
-
+import ExpoPip from "expo-pip";
 import { useEffect, useRef, useState, useCallback } from "react";
 
 import { AVATARS } from "@/src/lib/avatar/constants";
@@ -30,6 +30,7 @@ import {
 import Animated, { useSharedValue } from "react-native-reanimated";
 import { smooth } from "@components/animated/fade-in";
 import { RNSB } from "@/src/controllers/supabase";
+import { cn } from "@/src/utils/cn";
 export default function InteractiveAvatar({
   onLoad,
   onSessionEnd,
@@ -404,6 +405,7 @@ const Player = ({
   //     }
   //   };
   // }, [mediaSource.audio]);
+  const { isInPipMode } = ExpoPip.useIsInPip();
   const videoOpacity = useSharedValue(0);
   const dimensions = useWindowDimensions();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -439,13 +441,15 @@ const Player = ({
         trackRef={mediaSource.video}
         style={{
           display: "flex",
-          height: keyboardVisible
-            ? "100%"
-            : (`${((640 / dimensions.height) * 100).toFixed(2)}%` as DimensionValue),
-          maxHeight: keyboardVisible ? "100%" : "90%",
-          minHeight: keyboardVisible ? "100%" : "70%",
+          flex: 1,
+          height:
+            keyboardVisible || isInPipMode
+              ? "100%"
+              : (`${((640 / dimensions.height) * 100).toFixed(2)}%` as DimensionValue),
+          maxHeight: keyboardVisible || isInPipMode ? "100%" : "90%",
+          minHeight: keyboardVisible || isInPipMode ? "100%" : "70%",
           width: "100%",
-          paddingBottom: 100,
+          paddingBottom: !isInPipMode ? 100 : 0,
         }}
       />
     </Animated.View>

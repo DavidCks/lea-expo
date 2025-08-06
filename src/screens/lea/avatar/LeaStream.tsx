@@ -20,6 +20,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   useColorScheme,
+  Pressable,
 } from "react-native";
 import { registerGlobals } from "@livekit/react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -30,6 +31,10 @@ import Credits from "@components/top-bar/credits";
 import SidebarMenu from "@/src/lib/avatar/SidebarMenu";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/src/navigators/AppNavigator";
+import ExpoPip from "expo-pip";
+import { cn } from "@/src/utils/cn";
+import { Fullscreen, Info } from "lucide-react-native";
+import { Button } from "react-native-paper";
 // import Credits from "./Credits";
 // import BuyMoreCredits from "./BuyCredits";
 
@@ -57,6 +62,7 @@ const LeaImpl = () => {
   const userWallets = useMutation({
     mutationFn: RNSB.getCurrentUserWalletsData,
   });
+  const { isInPipMode } = ExpoPip.useIsInPip();
   const addMessage = leaMessagesNotifier((s) => s.addValue);
   const updateLastOrAddRemoteValue = leaMessagesNotifier(
     (s) => s.updateLastOrAddRemoteValue,
@@ -234,17 +240,6 @@ const LeaImpl = () => {
     );
   }
 
-  // return (
-  //   <>
-  //     <LEAHeader />
-  //     <div className="w-[calc(100%-32px)] h-full flex flex-col justify-center items-center m-4">
-  //       <div className="bg-neutral-100 dark:bg-neutral-900 text-black rounded-3xl dark:text-white p-4 text-center">
-  //         Psst... Lea's getting a makeover! She'll be back this weekend with a stunning new look worth waiting for. 😉
-  //       </div>
-  //     </div>
-  //   </>
-  // );
-
   return (
     <View
       className="dark:bg-black bg-white"
@@ -258,41 +253,47 @@ const LeaImpl = () => {
       {/* <TopBarWalletMenu /> */}
       <View className="flex-col-reverse relative flex-1">
         <View className="top-4 absolute left-6">
-          <SidebarMenu
-            navigation={
-              navigation as NativeStackNavigationProp<RootStackParamList>
-            }
-          />
+          {!isInPipMode && (
+            <SidebarMenu
+              navigation={
+                navigation as NativeStackNavigationProp<RootStackParamList>
+              }
+            />
+          )}
         </View>
         <View className="top-4 absolute right-6">
           <Credits />
         </View>
         {/* Chat Panel - Bottom on mobile, left on desktop */}
-        <View className="absolute w-full h-1/4 top-14 flex-col z-10">
-          <View className="h-full overflow-hidden w-full">
-            <View className="w-full rounded-4xl flex-col h-full">
-              <Animated.View
-                style={{
-                  height: "100%",
-                  opacity: chatOpacity,
-                }}
-              >
-                {/* <LEAChat avatar={avatar} showStartMessage={!isOutOfCredits} /> */}
-                <LEAChat avatar={avatar} showStartMessage={false} />
-              </Animated.View>
+        {!isInPipMode && (
+          <View className="absolute w-full h-1/4 top-14 flex-col z-10">
+            <View className="h-full overflow-hidden w-full">
+              <View className="w-full rounded-4xl flex-col h-full">
+                <Animated.View
+                  style={{
+                    height: "100%",
+                    opacity: chatOpacity,
+                  }}
+                >
+                  {/* <LEAChat avatar={avatar} showStartMessage={!isOutOfCredits} /> */}
+                  <LEAChat avatar={avatar} showStartMessage={false} />
+                </Animated.View>
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
         {/* Chat Input */}
-        <View className="absolute w-full h-1/8 bottom-0 flex-col z-10">
-          <LEAChatInput
-            avatar={avatar}
-            onTextSubmit={handleTextSubmit}
-            isActive={isAvatarActive && !isOutOfCredits}
-            onSessionEnd={handleSessionEnd}
-          />
-        </View>
+        {!isInPipMode && (
+          <View className={cn("absolute w-full h-1/8 bottom-0 flex-col z-10")}>
+            <LEAChatInput
+              avatar={avatar}
+              onTextSubmit={handleTextSubmit}
+              isActive={isAvatarActive && !isOutOfCredits}
+              onSessionEnd={handleSessionEnd}
+            />
+          </View>
+        )}
         {/* Header */}
         {/* <LEAChatHeader
           className="lg:hidden fixed z-50 w-2/3 md:w-1/3 right-0 flex justify-end pr-5"

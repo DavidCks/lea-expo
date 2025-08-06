@@ -4,7 +4,15 @@ import React, {
   useCallback,
   MutableRefObject,
 } from "react";
-import { AudioLines, Cross, Mic, MicOff, Send, X } from "lucide-react-native";
+import {
+  AudioLines,
+  Cross,
+  Mic,
+  MicOff,
+  Minimize2,
+  Send,
+  X,
+} from "lucide-react-native";
 import {
   View,
   TextInput,
@@ -18,6 +26,9 @@ import { micMutedNotifier } from "../state/micMuted";
 import { characterTalkingNotifier as avatarTalkingNotifier } from "../state/characterTalking";
 import { Avatar, TaskType } from "@/src/lib/avatar/avatar";
 import { RNSB } from "@/src/controllers/supabase";
+import ExpoPip from "expo-pip";
+import { Button } from "react-native-paper";
+import { cn } from "@/src/utils/cn";
 
 const LEAChatInput = ({
   avatar,
@@ -35,6 +46,7 @@ const LEAChatInput = ({
   const setChatMode = chatModeNotifier((s) => s.setValue);
   const micMuted = micMutedNotifier((s) => s.value);
   const setMicMuted = micMutedNotifier((s) => s.setValue);
+  const { isInPipMode } = ExpoPip.useIsInPip();
   const [inputHeight, setInputHeight] = useState(48); // start at base height
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -110,9 +122,13 @@ const LEAChatInput = ({
     handleMicMuted(chatMode || micMuted);
   }, [chatMode, micMuted]);
 
+  if (isInPipMode) {
+    return null;
+  }
+
   return (
     <View
-      className="w-full"
+      className={cn("w-full")}
       style={{
         height: inputHeight + 32,
       }}
@@ -195,11 +211,41 @@ const LEAChatInput = ({
               <X color="black" />
             </View>
           </TouchableOpacity>
+          <PiPButton />
         </View>
       )}
     </View>
   );
 };
+
+function PiPButton({ className }: { className?: string }) {
+  const { isInPipMode } = ExpoPip.useIsInPip();
+  const [automaticEnterEnabled, setAutomaticEnterEnabled] = useState(false);
+
+  if (isInPipMode) {
+    return null;
+  }
+
+  return (
+    <View className={cn("justify-center items-center", className)}>
+      {
+        <>
+          <Button
+            style={[styles.micButton]}
+            onPress={() => {
+              ExpoPip.enterPipMode({
+                width: 200,
+                height: 300,
+              });
+            }}
+          >
+            <Minimize2 />
+          </Button>
+        </>
+      }
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
