@@ -54,9 +54,9 @@ export function SignInImpl({ initialType }: { initialType: LogInPageType }) {
 
   return (
     <View className="flex-1">
-      <ScrollView className="w-full p-4 ">
-        <View className="w-full pt-12 mb-16">
-          <Text
+      <ScrollView className="w-full pt-8 p-4 ">
+        <View className="w-full mb-16">
+          {/* <Text
             style={{
               fontFamily: fonts.inter.fontFamily,
               textAlign: "center",
@@ -75,7 +75,7 @@ export function SignInImpl({ initialType }: { initialType: LogInPageType }) {
             }}
           >
             {i18n.description}
-          </Text>
+          </Text> */}
           {(type ?? initialType) !== LogInPageType.Details ? (
             <EmailSignInForm />
           ) : (

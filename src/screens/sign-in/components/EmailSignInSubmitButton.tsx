@@ -69,7 +69,7 @@ const EmailSignInSubmitButton = ({
               ? "Logging in..."
               : "Signing up..."
             : type === LogInPageType.LogIn
-              ? "Log in"
+              ? "Login"
               : "Sign up"}
         </Text>
       </Button>

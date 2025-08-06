@@ -5,7 +5,12 @@ import {
   RemoteTrack,
   Track,
 } from "livekit-client";
-import { Keyboard, KeyboardEvent } from "react-native";
+import {
+  DimensionValue,
+  Keyboard,
+  KeyboardEvent,
+  useWindowDimensions,
+} from "react-native";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
@@ -400,7 +405,7 @@ const Player = ({
   //   };
   // }, [mediaSource.audio]);
   const videoOpacity = useSharedValue(0);
-
+  const dimensions = useWindowDimensions();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
@@ -422,7 +427,7 @@ const Player = ({
       videoOpacity.value = smooth(1, 33);
     }, 500);
   }, []);
-
+  console.log(dimensions.height);
   return (
     <Animated.View
       style={{
@@ -434,7 +439,11 @@ const Player = ({
         trackRef={mediaSource.video}
         style={{
           display: "flex",
-          height: keyboardVisible ? "100%" : "76%",
+          height: keyboardVisible
+            ? "100%"
+            : (`${((640 / dimensions.height) * 100).toFixed(2)}%` as DimensionValue),
+          maxHeight: keyboardVisible ? "100%" : "90%",
+          minHeight: keyboardVisible ? "100%" : "70%",
           width: "100%",
           paddingBottom: 100,
         }}
@@ -442,17 +451,3 @@ const Player = ({
     </Animated.View>
   );
 };
-
-const playerStyles = StyleSheet.create({
-  contentContainer: {
-    flex: 1,
-    padding: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 50,
-  },
-  video: {
-    width: 350,
-    height: 275,
-  },
-});

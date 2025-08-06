@@ -34,7 +34,7 @@ export function HomeScreen() {
   const pagerViewRef = useRef<PagerView>(null);
   const navigation = useNavigation();
   const dimensions = useWindowDimensions();
-  const paddingTop = useSharedValue((LEALogo as any).iw);
+  const paddingTop = useSharedValue(dimensions.height / (LEALogo as any).iw);
   const [user, setUser] = useState<User | null>();
   const [logoStyle, setLogoStyle] = useState<"square" | "inline">("inline");
 
@@ -87,7 +87,13 @@ export function HomeScreen() {
         </View>
       </View>
       {isLoading ? (
-        <ActivityIndicator size="large" color="#a15c92" />
+        <ActivityIndicator
+          size="large"
+          style={{
+            marginTop: 128,
+          }}
+          color="#a15c92"
+        />
       ) : (
         <Animated.View
           className="flex-1"
@@ -115,10 +121,16 @@ export function HomeScreen() {
                   !user) &&
                 page.nativeEvent.position === 1
               ) {
-                paddingTop.value = smooth((LEALogo as any).sqw * 2, 300);
+                paddingTop.value = smooth(
+                  (dimensions.height / (LEALogo as any).sqw) * 1.5,
+                  300,
+                );
                 setLogoStyle("square");
               } else {
-                paddingTop.value = smooth((LEALogo as any).iw + 24, 300);
+                paddingTop.value = smooth(
+                  dimensions.height / (LEALogo as any).iw + 24,
+                  300,
+                );
                 setLogoStyle("inline");
               }
               setCurrentPage(page.nativeEvent.position);
@@ -126,11 +138,22 @@ export function HomeScreen() {
           >
             <View className="justify-center items-center" key="1">
               <ScrollView>
-                <View className="flex flex-col gap-16 pt-4">
-                  <View className="flex flex-col gap-16 items-center justify-center p-4">
+                <View
+                  className="flex flex-col"
+                  style={{
+                    gap: dimensions.height > 768 ? dimensions.height / 8 : 64,
+                  }}
+                >
+                  <View
+                    style={{
+                      gap:
+                        dimensions.height > 768 ? dimensions.height / 14 : 12,
+                    }}
+                    className="flex flex-col items-center justify-center"
+                  >
                     <FadeIn.fromTop>
                       {currentPage === 0 && (
-                        <Text className="dark:text-white text-black text-xl text-center italic">
+                        <Text className="dark:text-white text-black text-xl text-center pt-4 italic">
                           {user?.user_metadata["name"]
                             ? `Welcome ${user.user_metadata["name"]}!`
                             : "Welcome!"}
@@ -177,17 +200,21 @@ export function HomeScreen() {
               </ScrollView>
             </View>
             <View className="w-full flex-1 justify-center items-center" key="2">
-              <ScrollView className="w-full h-full">
-                <LEAGradient
-                  className="w-full h-full flex-1"
-                  style={{
-                    minHeight: dimensions.height - 192 * 2 - 24,
-                    paddingBottom: 192,
-                    justifyContent: "center",
-                    borderRadius: 48,
-                  }}
-                >
-                  <FadeIn.opacity>
+              <ScrollView className="w-full">
+                <FadeIn.opacity>
+                  <LEAGradient
+                    className="w-full h-full"
+                    style={{
+                      minHeight: dimensions.height / 1.77,
+                      paddingBottom: 224,
+                      justifyContent: "center",
+                      borderTopLeftRadius: 48,
+                      borderTopRightRadius: 48,
+                      borderBottomLeftRadius: 12,
+                      borderBottomRightRadius: 12,
+                      // borderRadius: 48,
+                    }}
+                  >
                     {currentPage === 1 && (
                       <SignInSelection
                         initialType={
@@ -201,15 +228,15 @@ export function HomeScreen() {
                           // SignInController.type.set(type);
                           SignInController.type.set(type);
                           paddingTop.value = smooth(
-                            (LEALogo as any).iw + 24,
+                            dimensions.height / (LEALogo as any).iw + 24,
                             300,
                           );
                           setLogoStyle("inline");
                         }}
                       />
                     )}
-                  </FadeIn.opacity>
-                </LEAGradient>
+                  </LEAGradient>
+                </FadeIn.opacity>
               </ScrollView>
             </View>
           </PagerView>
