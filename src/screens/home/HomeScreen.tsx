@@ -112,7 +112,7 @@ export function HomeScreen() {
                 "switched to pager",
                 page.nativeEvent.position,
                 "with user",
-                user,
+                user?.id,
                 "and type",
                 SignInController.state.type.peek(),
               );

@@ -133,18 +133,30 @@ export default function InteractiveAvatar({
 
   const startStream = useCallback(
     async (langIn: string, langOut: string) => {
+      console.log("[InteractiveAvatar] Destroying old avatar...");
+      await Avatar.destroy();
+      console.log("[InteractiveAvatar] Setting to 'loading'...");
       setIsLoadingSession(true);
       const selectedAvatarId = getAvatarId();
-      console.log("AVATAR", `using avatar with ID ${selectedAvatarId}.`);
+      console.log(
+        "[InteractiveAvatar]",
+        `using avatar with ID ${selectedAvatarId}.`,
+      );
       const langInObj = Object.values(languages).find(
         (v) => v.bcp47 === langIn,
       );
       if (!langInObj) {
-        console.error("AVATAR", "provided langIn was not a bcp47 string");
+        console.error(
+          "[InteractiveAvatar]",
+          "provided langIn was not a bcp47 string",
+        );
         setIsLoadingSession(false);
         return;
       }
-      console.log("AVATAR", `using input language ${langInObj.bcp47}.`);
+      console.log(
+        "[InteractiveAvatar]",
+        `using input language ${langInObj.bcp47}.`,
+      );
       const langCodeIn = langInObj.code;
       const greeting = langInObj.greeting;
       avatar.current = new Avatar(
@@ -154,12 +166,12 @@ export default function InteractiveAvatar({
         langCodeIn,
         userId,
       );
-      console.log("AVATAR", "initializing...");
+      console.log("[InteractiveAvatar]", "initializing...");
       const res = await avatar.current.init(!chatMode, "openai", {
         connect: () => {
           // setIsLoadingSession(false);
           // setIsSessionActive(true);
-          console.log("ROOM", "connected");
+          console.log("[InteractiveAvatar] [Room]", "connected");
         },
         disconnect: () => {
           setIsSessionActive(false);
@@ -168,7 +180,9 @@ export default function InteractiveAvatar({
         },
         failed: () => {
           setIsSessionActive(false);
-          console.error("Something went wrong. Try again later.");
+          console.error(
+            "[InteractiveAvatar] Something went wrong. Try again later.",
+          );
           if (onSessionEnd) onSessionEnd();
         },
         streamStart: (track: RemoteTrack, publication, participant) => {
@@ -198,29 +212,31 @@ export default function InteractiveAvatar({
             };
 
             if (!mediaStreamRef.current) {
-              console.error(`Media stream was ${mediaStreamRef.current}!`);
+              console.error(
+                `[InteractiveAvatar] Media stream was ${mediaStreamRef.current}!`,
+              );
             } else {
               setIsLoadingSession(false);
               setIsSessionActive(true);
             }
           } else {
-            console.log("Waiting for video stream...");
+            console.log("[InteractiveAvatar] Waiting for video stream...");
           }
         },
         connectionStateChanged: function (_state: ConnectionState): void {
-          console.log(_state);
+          console.log("[InteractiveAvatar] [Room]", _state);
         },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         reconnecting: function (_source: "signal" | "stream"): void {
           throw new Error("Function not implemented.");
         },
         event: function (_eventType: keyof RoomEventCallbacks): void {
-          console.log("ROOM", _eventType);
+          console.log("[InteractiveAvatar] [Room]", _eventType);
           // toast(`Triggered ${eventType}`);
         },
         speechStart: function (): void {
           audioTrackRef.current?.track.setMuted(false);
-          console.log("AUDIO", "stream unmuted");
+          console.log("[InteractiveAvatar] [Audio]", "stream unmuted");
         },
         inputTranscript: function (
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -239,16 +255,35 @@ export default function InteractiveAvatar({
           _isFinal: boolean,
         ): void {
           setTimeout(() => audioTrackRef.current?.track.setMuted(true), 50);
-          console.log("AUDIO", "stream muted");
+          console.log("[InteractiveAvatar] [Audio]", "stream muted");
         },
       });
-      console.log("AVATAR", "initialized.");
 
       if (res?.error) {
+        console.log(
+          "[InteractiveAvatar] encountered an error during initialization",
+        );
         console.error(res.error);
         Alert.alert(res.error.message);
       } else {
-        await avatar.current.speak({ text: greeting, taskType: TaskType.TALK });
+        console.log("[InteractiveAvatar] Initialized!");
+        console.log("[InteractiveAvatar] initiating greeting...");
+        let speakRes;
+        try {
+          speakRes = await avatar.current.speak({
+            text: greeting,
+            taskType: TaskType.TALK,
+          });
+        } catch (e) {
+          console.error(JSON.stringify(e));
+          console.error("[InteractiveAvatar] Error during greeting.");
+          return;
+        }
+
+        if (speakRes.state !== "final") {
+          console.error("[InteractiveAvatar] greeting failed.");
+        }
+        console.log("[InteractiveAvatar] calling onLoad...");
         onLoad(avatar.current);
       }
     },

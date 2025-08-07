@@ -100,15 +100,113 @@ export type StreamCallbacks = {
 };
 
 export class Avatar {
-  private _avatarId: string;
-  private _sessionId?: string;
-  private _room?: Room;
-  private _googleVoiceChatManager: GoogleVoiceChatManager;
-  private _openAIVoiceChatManager: OpenAIVoiceChatManager;
-  private _geminiResponseManager: GeminiResponseManager;
-  private _heygenSpeechManager: HeygenSpeechManager;
-  private _talkManager: TalkManager;
-  private _userId: string;
+  private static singletons: {
+    _avatarId: string;
+    _sessionId?: string;
+    _room?: Room;
+    _googleVoiceChatManager: GoogleVoiceChatManager;
+    _openAIVoiceChatManager: OpenAIVoiceChatManager;
+    _geminiResponseManager: GeminiResponseManager;
+    _heygenSpeechManager: HeygenSpeechManager;
+    _talkManager: TalkManager;
+    _userId: string;
+    _listeners: {
+      id: string;
+      eventData: EventData;
+    }[];
+  } = {
+    _avatarId: "", // set in constructor
+    _room: undefined,
+    _sessionId: undefined,
+    _userId: "", // set in constructor
+    _googleVoiceChatManager: {} as GoogleVoiceChatManager, // set in constructor
+    _openAIVoiceChatManager: {} as OpenAIVoiceChatManager, // set in constructor
+    _geminiResponseManager: {} as GeminiResponseManager, // set in constructor
+    _heygenSpeechManager: {} as HeygenSpeechManager, // set in constructor
+    _talkManager: {} as TalkManager, // set in constructor
+    _listeners: [],
+  };
+  // _avatarId
+  private get _avatarId() {
+    return Avatar.singletons._avatarId;
+  }
+  private set _avatarId(newId: string) {
+    Avatar.singletons._avatarId = newId;
+  }
+
+  // _sessionId
+  private get _sessionId() {
+    return Avatar.singletons._sessionId;
+  }
+  private set _sessionId(newSessionId: string | undefined) {
+    Avatar.singletons._sessionId = newSessionId;
+  }
+
+  // _room
+  private get _room() {
+    return Avatar.singletons._room;
+  }
+  private set _room(newRoom: Room | undefined) {
+    Avatar.singletons._room = newRoom;
+  }
+
+  // _googleVoiceChatManager
+  private get _googleVoiceChatManager() {
+    return Avatar.singletons._googleVoiceChatManager;
+  }
+  private set _googleVoiceChatManager(manager: GoogleVoiceChatManager) {
+    Avatar.singletons._googleVoiceChatManager = manager;
+  }
+
+  // _openAIVoiceChatManager
+  private get _openAIVoiceChatManager() {
+    return Avatar.singletons._openAIVoiceChatManager;
+  }
+  private set _openAIVoiceChatManager(manager: OpenAIVoiceChatManager) {
+    Avatar.singletons._openAIVoiceChatManager = manager;
+  }
+
+  // _geminiResponseManager
+  private get _geminiResponseManager() {
+    return Avatar.singletons._geminiResponseManager;
+  }
+  private set _geminiResponseManager(manager: GeminiResponseManager) {
+    Avatar.singletons._geminiResponseManager = manager;
+  }
+
+  // _heygenSpeechManager
+  private get _heygenSpeechManager() {
+    return Avatar.singletons._heygenSpeechManager;
+  }
+  private set _heygenSpeechManager(manager: HeygenSpeechManager) {
+    Avatar.singletons._heygenSpeechManager = manager;
+  }
+
+  // _talkManager
+  private get _talkManager() {
+    return Avatar.singletons._talkManager;
+  }
+  private set _talkManager(manager: TalkManager) {
+    Avatar.singletons._talkManager = manager;
+  }
+
+  // _userId
+  private get _userId() {
+    return Avatar.singletons._userId;
+  }
+  private set _userId(newUserId: string) {
+    Avatar.singletons._userId = newUserId;
+  }
+
+  // _listeners getter
+  private get _listeners() {
+    return Avatar.singletons._listeners;
+  }
+
+  // _listeners setter
+  private set _listeners(newListeners: { id: string; eventData: EventData }[]) {
+    Avatar.singletons._listeners = newListeners;
+  }
 
   constructor(
     avatarId: string,
@@ -117,32 +215,37 @@ export class Avatar {
     langCodeIn: string,
     userId: string,
   ) {
-    console.log("AVATAR", "Constructing managers...");
-    this._avatarId = avatarId;
-    console.log("AVATAR", "Constructing GeminiResponseManager...");
-    this._geminiResponseManager = new GeminiResponseManager(langOut);
-    console.log("AVATAR", "Constructing HeygenSpeechManager...");
+    console.log("[avatar] AVATAR", "Constructing managers...");
+    Avatar.singletons._avatarId = avatarId;
+    console.log("[avatar]", "Constructing GeminiResponseManager...");
+    Avatar.singletons._geminiResponseManager = new GeminiResponseManager(
+      langOut,
+    );
+    console.log("[avatar]", "Constructing HeygenSpeechManager...");
 
-    this._heygenSpeechManager = new HeygenSpeechManager(langOut);
-    console.log("AVATAR", "Constructing TalkManager...");
-    this._talkManager = new TalkManager(langOut, this._heygenSpeechManager);
-    console.log("AVATAR", "Constructing OpenAIVoiceChatManager...");
-    this._openAIVoiceChatManager = new OpenAIVoiceChatManager(
-      this._geminiResponseManager,
-      this._heygenSpeechManager,
-      this._talkManager,
+    Avatar.singletons._heygenSpeechManager = new HeygenSpeechManager(langOut);
+    console.log("[avatar]", "Constructing TalkManager...");
+    Avatar.singletons._talkManager = new TalkManager(
+      langOut,
+      Avatar.singletons._heygenSpeechManager,
+    );
+    console.log("[avatar]", "Constructing OpenAIVoiceChatManager...");
+    Avatar.singletons._openAIVoiceChatManager = new OpenAIVoiceChatManager(
+      Avatar.singletons._geminiResponseManager,
+      Avatar.singletons._heygenSpeechManager,
+      Avatar.singletons._talkManager,
       langCodeIn,
       userId,
     );
-    console.log("AVATAR", "Constructing GoogleVoiceChatManager...");
-    this._googleVoiceChatManager = new GoogleVoiceChatManager(
-      this._geminiResponseManager,
-      this._heygenSpeechManager,
-      this._talkManager,
+    console.log("[avatar]", "Constructing GoogleVoiceChatManager...");
+    Avatar.singletons._googleVoiceChatManager = new GoogleVoiceChatManager(
+      Avatar.singletons._geminiResponseManager,
+      Avatar.singletons._heygenSpeechManager,
+      Avatar.singletons._talkManager,
       langIn,
     );
-    this._userId = userId;
-    console.log("AVATAR", "Finished constructing managers.");
+    Avatar.singletons._userId = userId;
+    console.log("[avatar]", "Finished constructing managers.");
   }
 
   private async _fetchAccessToken(): Promise<
@@ -216,7 +319,7 @@ export class Avatar {
     }
   }
 
-  private async _endHeygenSession(
+  private static async _endHeygenSession(
     sessionId: string,
   ): Promise<AvatarResponse<string>> {
     try {
@@ -251,6 +354,12 @@ export class Avatar {
     }
   }
 
+  private async _endHeygenSession(
+    sessionId: string,
+  ): Promise<AvatarResponse<string>> {
+    return await Avatar._endHeygenSession(sessionId);
+  }
+
   private async _connectToHeygenStream(
     url: string,
     accessToken: string,
@@ -270,7 +379,7 @@ export class Avatar {
     this._room.on("trackPublished", (publication, participant) => {
       on.event("trackPublished");
 
-      // console.log("publication: ", publication, "participant: ", participant);
+      // console.log("[avatar] publication: ", publication, "participant: ", participant);
     });
 
     this._room.on(
@@ -278,7 +387,7 @@ export class Avatar {
       (trackSid, participant, reason) => {
         on.event("trackSubscriptionFailed");
 
-        console.error("Stream subscription failed", reason);
+        console.error("[avatar] Stream subscription failed", reason);
         on.failed(trackSid, participant, reason);
       },
     );
@@ -286,14 +395,14 @@ export class Avatar {
     this._room.on("connected", () => {
       on.event("connected");
 
-      console.log("Connected to LiveKit room");
+      console.log("[avatar] Connected to LiveKit room");
       on.connect();
     });
 
     this._room.on("reconnecting", () => {
       on.event("reconnecting");
 
-      console.log("Reconnecting to LiveKit room");
+      console.log("[avatar] Reconnecting to LiveKit room");
       on.reconnecting("stream");
     });
 
@@ -302,28 +411,28 @@ export class Avatar {
       if (state === "disconnected") {
         on.disconnect("disconnected");
       }
-      console.log("Connection to LiveKit room changed");
+      console.log("[avatar] Connection to LiveKit room changed");
       on.connectionStateChanged(state);
     });
 
     this._room.on("signalReconnecting", () => {
       on.event("signalReconnecting");
 
-      console.log("Reconnecting to LiveKit room");
+      console.log("[avatar] Reconnecting to LiveKit room");
       on.reconnecting("signal");
     });
 
     this._room.on("reconnected", () => {
       on.event("reconnected");
 
-      console.log("Reconnected to LiveKit room");
+      console.log("[avatar] Reconnected to LiveKit room");
       on.connect();
     });
 
     this._room.on("trackUnsubscribed", (track, publication, participant) => {
       on.event("trackUnsubscribed");
 
-      console.log("Stream track unsubscribed", track.source);
+      console.log("[avatar] Stream track unsubscribed", track.source);
       this._endHeygenSession(sessionId);
       on.disconnect("trackUnsubscribed", track, publication, participant);
     });
@@ -332,7 +441,7 @@ export class Avatar {
       on.event("trackUnpublished");
 
       console.log(
-        "Stream unpublished: ",
+        "[avatar] Stream unpublished: ",
         publication,
         "for participant: ",
         participant,
@@ -344,7 +453,7 @@ export class Avatar {
     this._room.on("disconnected", () => {
       on.event("disconnected");
 
-      console.log("Stream disconnected");
+      console.log("[avatar] Stream disconnected");
       this._endHeygenSession(sessionId);
       on.disconnect("disconnected");
     });
@@ -352,96 +461,100 @@ export class Avatar {
     this._room.on("mediaDevicesChanged", () => {
       on.event("mediaDevicesChanged");
 
-      console.log("Media device changed");
+      console.log("[avatar] Media device changed");
     });
 
     this._room.on("participantConnected", (p) => {
       on.event("participantConnected");
 
-      console.log("Participant connected", p);
+      console.log("[avatar] Participant connected", p.identity);
     });
 
     this._room.on("participantDisconnected", (p) => {
       on.event("participantDisconnected");
 
-      console.log("Participant disconnected", p);
+      console.log("[avatar] Participant disconnected", p.identity);
     });
 
     this._room.on("trackMuted", (p) => {
       on.event("trackMuted");
 
-      console.log("Track muted", p.source);
+      console.log("[avatar] Track muted", p.source);
     });
 
     this._room.on("trackUnmuted", (p) => {
       on.event("trackUnmuted");
 
-      console.log("Track unmuted", p.source);
+      console.log("[avatar] Track unmuted", p.source);
     });
 
     this._room.on("localTrackPublished", (p) => {
       on.event("localTrackPublished");
 
-      console.log("local Track Published", p);
+      console.log("[avatar] local Track Published", p);
     });
 
     this._room.on("localTrackUnpublished", (p) => {
       on.event("localTrackUnpublished");
 
-      console.log("local Track Unpublished", p);
+      console.log("[avatar] local Track Unpublished", p);
     });
 
     this._room.on("localAudioSilenceDetected", (p) => {
       on.event("localAudioSilenceDetected");
 
-      console.log("local Audio Silence Detected", p);
+      console.log("[avatar] local Audio Silence Detected", p);
     });
 
     this._room.on("participantMetadataChanged", (meta, p) => {
       on.event("participantMetadataChanged");
 
-      console.log("Metadata changed for: ", p);
-      console.log("Metadata: ", meta);
+      console.log("[avatar] Metadata changed for: ", p);
+      console.log("[avatar] Metadata: ", meta);
     });
 
     this._room.on("participantMetadataChanged", (meta, p) => {
       on.event("participantMetadataChanged");
 
-      console.log("Metadata changed for: ", p);
-      console.log("Metadata: ", meta);
+      console.log("[avatar] Metadata changed for: ", p);
+      console.log("[avatar] Metadata: ", meta);
     });
 
     this._room.on("participantNameChanged", (name, p) => {
       on.event("participantNameChanged");
 
-      console.log("Name changed for: ", p);
-      console.log("Name: ", name);
+      console.log("[avatar] Name changed for: ", p);
+      console.log("[avatar] Name: ", name);
     });
 
     this._room.on("participantAttributesChanged", (attr, p) => {
       on.event("participantAttributesChanged");
 
-      console.log("Attribute changed for: ", p);
-      console.log("Attribute: ", attr);
+      console.log("[avatar] Attribute changed for: ", p);
+      console.log("[avatar] Attribute: ", attr);
     });
 
     this._room.on("participantAttributesChanged", (attr, p) => {
       on.event("participantAttributesChanged");
 
-      console.log("Attribute changed for: ", p);
-      console.log("Attribute: ", attr);
+      console.log("[avatar] Attribute changed for: ", p);
+      console.log("[avatar] Attribute: ", attr);
     });
 
     this._room.on("activeSpeakersChanged", (speakers) => {
       on.event("activeSpeakersChanged");
 
-      console.log("Active speakers changed:", speakers);
+      console.log(
+        "[avatar] Active speakers changed:",
+        speakers.length,
+        speakers.map((s) => s.sid),
+      );
     });
 
     this._room.on("roomMetadataChanged", (metadata) => {
       on.event("roomMetadataChanged");
 
-      console.log("Room metadata changed:", metadata);
+      console.log("[avatar] Room metadata changed:", metadata);
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -464,23 +577,26 @@ export class Avatar {
           duration_ms: decodedPayload.duration_ms as number,
         });
       }
-      console.log("DATA RECEIVED", "Payload:", decodedString);
+      console.log("[avatar] DATA RECEIVED", "Payload:", decodedString);
     });
 
     this._room.on(
       "transcriptionReceived",
       (transcription, participant, publication) => {
-        console.log("Transcription received:", transcription);
-        console.log("From participant:", participant);
-        console.log("Track publication:", publication);
+        console.log("[avatar] Transcription received:", transcription);
+        console.log("[avatar] From participant:", participant);
+        console.log("[avatar] Track publication:", publication);
       },
     );
 
     this._room.on("connectionQualityChanged", (quality, participant) => {
       on.event("connectionQualityChanged");
 
-      console.log("Connection quality changed for:", participant.identity);
-      console.log("New quality:", quality);
+      console.log(
+        "[avatar] Connection quality changed for:",
+        participant.identity,
+      );
+      console.log("[avatar] New quality:", quality);
     });
 
     this._room.on("mediaDevicesError", (error) => {
@@ -492,52 +608,52 @@ export class Avatar {
     this._room.on(
       "trackStreamStateChanged",
       (publication, streamState, participant) => {
-        console.log("Track stream state changed:", streamState);
-        console.log("For publication:", publication);
-        console.log("Participant:", participant);
+        console.log("[avatar] Track stream state changed:", streamState);
+        console.log("[avatar] For publication:", publication);
+        console.log("[avatar] Participant:", participant);
       },
     );
 
     this._room.on(
       "trackSubscriptionPermissionChanged",
       (publication, status, participant) => {
-        console.log("Track subscription permission changed:", status);
-        console.log("Publication:", publication.source);
-        console.log("Participant:", participant.identity);
+        console.log("[avatar] Track subscription permission changed:", status);
+        console.log("[avatar] Publication:", publication.source);
+        console.log("[avatar] Participant:", participant.identity);
       },
     );
 
     this._room.on(
       "trackSubscriptionStatusChanged",
       (publication, status, participant) => {
-        console.log("Track subscription status changed:", status);
-        console.log("Publication:", publication.source);
-        console.log("Participant:", participant.identity);
+        console.log("[avatar] Track subscription status changed:", status);
+        console.log("[avatar] Publication:", publication.source);
+        console.log("[avatar] Participant:", participant.identity);
       },
     );
 
     this._room.on("audioPlaybackChanged", (playing) => {
       on.event("audioPlaybackChanged");
 
-      console.log("Audio playback changed. Playing:", playing);
+      console.log("[avatar] Audio playback changed. Playing:", playing);
     });
 
     this._room.on("videoPlaybackChanged", (playing) => {
       on.event("videoPlaybackChanged");
 
-      console.log("Video playback changed. Playing:", playing);
+      console.log("[avatar] Video playback changed. Playing:", playing);
     });
 
     this._room.on("signalConnected", () => {
       on.event("signalConnected");
 
-      console.log("Signal connected.");
+      console.log("[avatar] Signal connected.");
     });
 
     this._room.on("recordingStatusChanged", (recording) => {
       on.event("recordingStatusChanged");
 
-      console.log("Recording status changed. Recording:", recording);
+      console.log("[avatar] Recording status changed. Recording:", recording);
     });
 
     this._room.on(
@@ -547,7 +663,7 @@ export class Avatar {
           "Participant encryption status changed. Encrypted:",
           encrypted,
         );
-        console.log("Participant:", participant);
+        console.log("[avatar] Participant:", participant);
       },
     );
 
@@ -560,28 +676,33 @@ export class Avatar {
     this._room.on("dcBufferStatusChanged", (isLow, kind) => {
       on.event("dcBufferStatusChanged");
 
-      console.log("DataChannel buffer status changed. Is low:", isLow);
-      console.log("Kind:", kind);
+      console.log("[avatar] DataChannel buffer status changed. Is low:", isLow);
+      console.log("[avatar] Kind:", kind);
     });
 
     this._room.on("activeDeviceChanged", (kind, deviceId) => {
       on.event("activeDeviceChanged");
 
-      console.log("Active device changed. Kind:", kind, "Device ID:", deviceId);
+      console.log(
+        "[avatar] Active device changed. Kind:",
+        kind,
+        "Device ID:",
+        deviceId,
+      );
     });
 
     this._room.on("chatMessage", (message, participant) => {
       on.event("chatMessage");
 
-      console.log("Chat message received:", message);
-      console.log("From participant:", participant);
+      console.log("[avatar] Chat message received:", message);
+      console.log("[avatar] From participant:", participant);
     });
 
     this._room.on("localTrackSubscribed", (publication, participant) => {
       on.event("localTrackSubscribed");
 
-      console.log("Local track subscribed:", publication);
-      console.log("Participant:", participant);
+      console.log("[avatar] Local track subscribed:", publication);
+      console.log("[avatar] Participant:", participant);
     });
 
     await this._room.connect(url, accessToken);
@@ -592,26 +713,41 @@ export class Avatar {
     voiceChatProvider: "openai" | "google",
     on: StreamCallbacks,
   ) {
+    console.log("[avatar] fetching access token...");
     const accessData = await this._fetchAccessToken();
     if (accessData.error) {
+      console.error("[avatar] failed to fetch access token!");
       return accessData;
     }
     this._sessionId = accessData.value.session_id;
 
+    console.log("[avatar] starting session...");
     const startStatus = await this._startHeygenSession(
       accessData.value.session_id,
     );
     if (startStatus.error) {
+      console.error("[avatar] failed to start session!");
       return startStatus;
     }
 
-    await this._connectToHeygenStream(
-      accessData.value.url,
-      accessData.value.access_token,
-      accessData.value.session_id,
-      on,
-    );
+    console.log("[avatar] connecting to heygen stream...");
+    try {
+      await this._connectToHeygenStream(
+        accessData.value.url,
+        accessData.value.access_token,
+        accessData.value.session_id,
+        on,
+      );
+    } catch (e) {
+      console.error("[avatar] failed connecting to heygen stream...");
+      console.error(JSON.stringify(e));
+      return;
+    }
     if (withVoiceChat) {
+      console.error(
+        "[avatar] starting voice chat on init with provider",
+        voiceChatProvider,
+      );
       this.startVoiceChat(
         { inputTranscript: on.inputTranscript, interrupt: on.interrupt },
         voiceChatProvider,
@@ -629,23 +765,62 @@ export class Avatar {
     }
   }
 
-  async destroy() {
-    if (this._sessionId) {
-      await this._endHeygenSession(this._sessionId);
+  static async destroy() {
+    console.log("[Avatar] Skipping if singletons are unset...");
+    if (!Avatar.singletons) {
+      return;
     }
 
-    if (this._room) {
-      await this._room?.disconnect();
+    console.log("[Avatar] Checking if there is a session id...");
+    if (Avatar.singletons._sessionId) {
+      console.log("[Avatar] Stopping session...");
+      await Avatar._endHeygenSession(Avatar.singletons._sessionId);
     }
-    this._googleVoiceChatManager.closeVoiceChat();
-    this._openAIVoiceChatManager.closeVoiceChat();
-    this._listeners = [];
+
+    console.log("[Avatar] Checking if there is a room...");
+    if (Avatar.singletons._room) {
+      console.log("[Avatar] Disconnecting room...");
+      await Avatar.singletons._room?.disconnect();
+    }
+
+    console.log("[Avatar] Checking if google voice chat manager exists...");
+    if (
+      Avatar.singletons._googleVoiceChatManager &&
+      Object.hasOwn(Avatar.singletons._googleVoiceChatManager, "closeVoiceChat")
+    ) {
+      console.log("[Avatar] Disconnecting from google voice chat...");
+      try {
+        Avatar.singletons._googleVoiceChatManager.closeVoiceChat();
+      } catch (e) {
+        console.error("[Avatar] Failed to close google voice chat.");
+        console.error("[Avatar]", JSON.stringify(e));
+      }
+    } else {
+      console.log("[Avatar] Google voice chat not initialized.");
+    }
+
+    console.log("[Avatar] Checking if openai voice chat manager exists...");
+    if (
+      Avatar.singletons._openAIVoiceChatManager &&
+      Object.hasOwn(Avatar.singletons._openAIVoiceChatManager, "closeVoiceChat")
+    ) {
+      console.log("[Avatar] Disconnecting from openai voice chat...");
+      try {
+        Avatar.singletons._openAIVoiceChatManager.closeVoiceChat();
+      } catch (e) {
+        console.error("[Avatar] Failed to close openai voice chat.");
+        console.error("[Avatar]", JSON.stringify(e));
+      }
+    } else {
+      console.log("[Avatar] OpenAI voice chat not initialized.");
+    }
+    console.log("[Avatar] resetting listeners...");
+    Avatar.singletons._listeners = [];
   }
 
-  private _listeners: {
-    id: string;
-    eventData: EventData;
-  }[] = [];
+  async destroy() {
+    return await Avatar.destroy();
+  }
 
   hasListener(id: string) {
     const l = this._listeners.find((l) => l.id === id);
@@ -718,6 +893,7 @@ export class Avatar {
     };
     let talkResponse;
     if (taskType === TaskType.TALK) {
+      console.log("[Avatar] performing talk request:", text);
       talkResponse = await this._talkManager.talk(
         { text: text },
         "text",
@@ -734,6 +910,7 @@ export class Avatar {
       };
     }
 
+    console.log("[Avatar] performing speak request:", text);
     const response = await this._heygenSpeechManager._speak(
       { text: text },
       "text",

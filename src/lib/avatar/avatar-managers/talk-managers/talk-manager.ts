@@ -48,17 +48,31 @@ export class TalkManager {
       this.resolvePendingTalk = resolve;
 
       if (this.isTalking || sinceLast < 200) {
-        console.log(`[talk] In cooldown or in-flight. Will debounce.`);
+        console.log(`[talk] [debounce] debouncing request:`, args.text);
+        console.log(
+          `[talk] [debounce] debouncing request reason:`,
+          this.isTalking
+            ? "is talking"
+            : sinceLast < 200
+              ? "less than 200ms since last"
+              : "unknonw reason (investigate)",
+        );
+        console.log(
+          `[talk] [debounce]  In cooldown or in-flight. Will debounce.`,
+        );
 
         if (this.talkTimer) {
           clearTimeout(this.talkTimer);
-          console.log(`[talk] Cleared existing debounce timers`);
+          console.log(`[talk] [debounce]  Cleared existing debounce timers`);
         }
 
         this.talkTimer = setTimeout(() => {
           this.talkTimer = null;
           const latestArgs = this.pendingTalkArgs!;
-          console.log(`[talk] Executing debounced call`);
+          console.log(
+            `[talk] [debounce] Executing debounced call:`,
+            latestArgs[0].text,
+          );
           this._performTalk(...latestArgs).then(this.resolvePendingTalk!);
         }, 200);
       } else {
@@ -103,6 +117,7 @@ export class TalkManager {
     let response: Response;
 
     try {
+      console.log(`[talk] sending talk fetch request with text:`, text);
       response = await RNSB.fetchWithAuth(url, {
         method: "POST",
         headers: {
@@ -110,6 +125,7 @@ export class TalkManager {
         },
         body: JSON.stringify(request),
       });
+      console.log("[talk] completed talk fetch request with text:", text);
     } catch (err) {
       console.error(`[talk] Fetch error:`, err);
       this.isTalking = false;
@@ -122,7 +138,6 @@ export class TalkManager {
       };
     }
 
-    const final = speechIsFinal();
     let body: {
       duration_ms: number;
       task_id: string;
@@ -133,8 +148,24 @@ export class TalkManager {
       text: "",
     };
 
-    const resData = await response.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[talk]", errorText);
+    }
+
+    console.log("[talk] reading response body...");
+    let resData;
+    try {
+      resData = await response.json();
+    } catch (e) {
+      console.error("[talk] error reading response body...");
+      console.error(JSON.stringify(e));
+    }
+    console.log("[talk] checking if speech is final...");
     if (speechIsFinal() && response.ok) {
+      console.info(
+        "[talk] speech was final and response was ok. applying response body...",
+      );
       const taskBody = resData.data as {
         duration_ms: number;
         task_id: string;
@@ -154,14 +185,14 @@ export class TalkManager {
     this.isTalking = false;
 
     console.log(
-      `[talk] Completed with state: ${!response.ok ? "error" : final ? "final" : "interrupt"}`,
+      `[talk] Completed with state: ${!response.ok ? "error" : speechIsFinal() ? "final" : "interrupt"}`,
     );
 
     return {
       ...body,
       source: source,
       value: text,
-      state: !response.ok ? "error" : final ? "final" : "interrupt",
+      state: !response.ok ? "error" : speechIsFinal() ? "final" : "interrupt",
     };
   }
 }

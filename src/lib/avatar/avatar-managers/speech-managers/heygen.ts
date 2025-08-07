@@ -80,6 +80,7 @@ export class HeygenSpeechManager {
       task_id?: string;
     }>((resolve) => {
       setTimeout(async () => {
+        console.log("[HeygenSpeechManager] Sending interrupt from _speak");
         await this.interrupt(sessionId);
         if (source === "voice" && !speechIsFinal()) {
           resolve({
@@ -118,29 +119,37 @@ export class HeygenSpeechManager {
     });
   }
 
-  private isInterrupting: boolean = false;
-  private lastInterruptTime: number = 0;
-  private interruptTimer: NodeJS.Timeout | null = null;
-  private pendingSessionId: string | null = null;
+  private static isInterrupting: boolean = false;
+  private static lastInterruptTime: number = 0;
+  private static interruptTimer: NodeJS.Timeout | null = null;
+  private static pendingSessionId: string | null = null;
 
   async interrupt(sessionId: string): Promise<AvatarResponse<string>> {
     const now = Date.now();
-    const sinceLast = now - this.lastInterruptTime;
-    this.pendingSessionId = sessionId;
+    const sinceLast = now - HeygenSpeechManager.lastInterruptTime;
+    HeygenSpeechManager.pendingSessionId = sessionId;
 
     // If we're in cooldown or in-flight, defer the call
-    if (this.isInterrupting || sinceLast < 100) {
-      if (this.interruptTimer) {
-        clearTimeout(this.interruptTimer);
+    if (HeygenSpeechManager.isInterrupting || sinceLast < 500) {
+      console.log("[HeygenSpeechManager] Interrupt in flight. debouncing...");
+      if (HeygenSpeechManager.interruptTimer) {
+        console.log("[HeygenSpeechManager] Clearing interrupt timer...");
+        clearTimeout(HeygenSpeechManager.interruptTimer);
       }
 
-      this.interruptTimer = setTimeout(async () => {
-        const latestSessionId = this.pendingSessionId;
-        this.interruptTimer = null;
+      console.log("[HeygenSpeechManager] Creating new interrupt timer...");
+      HeygenSpeechManager.interruptTimer = setTimeout(async () => {
+        console.log("[HeygenSpeechManager] Performing debounced interrupt...");
+        const latestSessionId = HeygenSpeechManager.pendingSessionId;
+        HeygenSpeechManager.interruptTimer = null;
         if (latestSessionId) {
           await this._performInterrupt(latestSessionId);
+        } else {
+          console.log(
+            "[HeygenSpeechManager] Cancelling debounced interrupt because there is no pending session id...",
+          );
         }
-      }, 100);
+      }, 500);
 
       return {
         value: undefined,
@@ -149,6 +158,7 @@ export class HeygenSpeechManager {
     }
 
     // Otherwise perform immediately
+    console.log("[HeygenSpeechManager] Performing interrupt...");
     const interruptResult = await this._performInterrupt(sessionId);
     return interruptResult;
   }
@@ -156,9 +166,12 @@ export class HeygenSpeechManager {
   private async _performInterrupt(
     sessionId: string,
   ): Promise<AvatarResponse<string>> {
-    this.isInterrupting = true;
-    this.lastInterruptTime = Date.now();
-    console.log("[interrupt] performing interrupt at ", Date.now());
+    HeygenSpeechManager.isInterrupting = true;
+    HeygenSpeechManager.lastInterruptTime = Date.now();
+    console.log(
+      "[HeygenSpeechManager] [interrupt] performing interrupt at ",
+      Date.now(),
+    );
     try {
       const url = RNSB.getBackendUrl("/api/interrupt");
       const res = await RNSB.fetchWithAuth(url, {
@@ -189,7 +202,7 @@ export class HeygenSpeechManager {
         error: { message: `Failed to interrupt session: ${error}` },
       };
     } finally {
-      this.isInterrupting = false;
+      HeygenSpeechManager.isInterrupting = false;
     }
   }
 }

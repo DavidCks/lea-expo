@@ -87,7 +87,9 @@ const LeaImpl = () => {
 
   const handleLoadAvatar = useCallback(
     (newAvatar: Avatar) => {
+      console.log("[LeaStream] handling new avatar...");
       avatar.current = newAvatar;
+      console.log("[LeaStream] setting speak start setter...");
       avatar.current.on("speakStart", {
         type: "speakStart",
         callback: async (data) => {
@@ -102,6 +104,7 @@ const LeaImpl = () => {
         },
       });
 
+      console.log("[LeaStream] setting speak end setter...");
       avatar.current.on("chatSpeakMessageEnd", {
         type: "speakEnd",
         callback: function (data: AvatarEventSpeechEndData): void {
@@ -109,7 +112,10 @@ const LeaImpl = () => {
         },
       });
 
+      console.log("[LeaStream] resetting messages...");
       resetMessages();
+
+      console.log("[LeaStream] setting active...");
       setIsAvatarActive(true);
 
       if (
@@ -131,6 +137,7 @@ const LeaImpl = () => {
         clearInterval(sessionDataInterval.current);
       }
 
+      console.log("[LeaStream] updating credits for staring a session...");
       RNSB.updateCredits((oldCredits) => {
         return oldCredits + RNSB.config.credits.perSession;
       });
@@ -265,35 +272,37 @@ const LeaImpl = () => {
           <Credits />
         </View>
         {/* Chat Panel - Bottom on mobile, left on desktop */}
-        {!isInPipMode && (
-          <View className="absolute w-full h-1/4 top-14 flex-col z-10">
-            <View className="h-full overflow-hidden w-full">
-              <View className="w-full rounded-4xl flex-col h-full">
-                <Animated.View
-                  style={{
-                    height: "100%",
-                    opacity: chatOpacity,
-                  }}
-                >
-                  {/* <LEAChat avatar={avatar} showStartMessage={!isOutOfCredits} /> */}
-                  <LEAChat avatar={avatar} showStartMessage={false} />
-                </Animated.View>
-              </View>
+        <View
+          style={{ opacity: isInPipMode ? 0 : 1 }}
+          className="absolute w-full h-1/4 top-14 flex-col z-10"
+        >
+          <View className="h-full overflow-hidden w-full">
+            <View className="w-full rounded-4xl flex-col h-full">
+              <Animated.View
+                style={{
+                  height: "100%",
+                  opacity: chatOpacity,
+                }}
+              >
+                {/* <LEAChat avatar={avatar} showStartMessage={!isOutOfCredits} /> */}
+                <LEAChat avatar={avatar} showStartMessage={false} />
+              </Animated.View>
             </View>
           </View>
-        )}
+        </View>
 
         {/* Chat Input */}
-        {!isInPipMode && (
-          <View className={cn("absolute w-full h-1/8 bottom-0 flex-col z-10")}>
-            <LEAChatInput
-              avatar={avatar}
-              onTextSubmit={handleTextSubmit}
-              isActive={isAvatarActive && !isOutOfCredits}
-              onSessionEnd={handleSessionEnd}
-            />
-          </View>
-        )}
+        <View
+          style={{ opacity: isInPipMode ? 0 : 1 }}
+          className={cn("absolute w-full h-1/8 bottom-0 flex-col z-10")}
+        >
+          <LEAChatInput
+            avatar={avatar}
+            onTextSubmit={handleTextSubmit}
+            isActive={isAvatarActive && !isOutOfCredits}
+            onSessionEnd={handleSessionEnd}
+          />
+        </View>
         {/* Header */}
         {/* <LEAChatHeader
           className="lg:hidden fixed z-50 w-2/3 md:w-1/3 right-0 flex justify-end pr-5"

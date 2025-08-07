@@ -85,7 +85,7 @@ export class RNSB {
     ) {
       const ipAddress = debuggerHost.split(":")[0];
       base = `http://${ipAddress}:3000`;
-      console.log("using local backend with ip:", base);
+      console.log("[Supabase] using local backend with ip:", base);
     } else if (
       process.env.EXPO_PUBLIC_PROD_BACKEND_URL ??
       EXPO_PUBLIC_PROD_BACKEND_URL
@@ -93,10 +93,10 @@ export class RNSB {
       base =
         process.env.EXPO_PUBLIC_PROD_BACKEND_URL ??
         EXPO_PUBLIC_PROD_BACKEND_URL;
-      console.log("using remote backend with ip:", base);
+      console.log("[Supabase] using remote backend with ip:", base);
     } else {
       console.error(
-        'No backend found. Set EXPO_PUBLIC_PROD_BACKEND_URL to the backend api or run the server locally and set EXPO_PUBLIC_ENVIRONMENT to "local"',
+        '[Supabase] No backend found. Set EXPO_PUBLIC_PROD_BACKEND_URL to the backend api or run the server locally and set EXPO_PUBLIC_ENVIRONMENT to "local"',
       );
     }
     const url = new URL(path, base);
@@ -199,8 +199,10 @@ export class RNSB {
   static async fetchWithAuth(
     url: string,
     options: RequestInit = {},
+    timeoutMs: number = 30000, // optional timeout in milliseconds
   ): Promise<Response> {
     RNSB.ensureInitialized();
+
     const {
       data: { session },
     } = await RNSB.client.auth.getSession();
@@ -210,10 +212,27 @@ export class RNSB {
       headers.append("Authorization", `Bearer ${session.access_token}`);
     }
 
-    return fetch(url, {
-      ...options,
-      headers,
-    });
+    const controller = new AbortController();
+    const timeout =
+      timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : null;
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
+      return response;
+    } catch (error) {
+      if ((error as any).name === "AbortError") {
+        console.error(
+          `[fetchWithAuth] Request to ${url} timed out after ${timeoutMs}ms`,
+        );
+      }
+      throw error;
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
   }
 
   static async getActiveUsers(): Promise<number> {

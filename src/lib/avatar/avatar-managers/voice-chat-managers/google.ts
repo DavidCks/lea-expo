@@ -39,7 +39,7 @@ export class GoogleVoiceChatManager implements VoiceChatManager {
     sessionId: string,
     task_type: TaskType,
   ) {
-    console.log("starting voice chat...");
+    console.log("[Google voice chat] starting voice chat...");
     const host = window.location.hostname;
     const portNumber = window.location.port;
     const port = portNumber ? `:${portNumber}` : "";
@@ -59,7 +59,7 @@ export class GoogleVoiceChatManager implements VoiceChatManager {
       }
       this._speechIsFinal = isChunk;
       on?.inputTranscript(this._transcript, isChunk, false);
-      console.log(transcript, isChunk);
+      console.log("[Google voice chat]", transcript, isChunk);
       if (isChunk) {
         this._transcript += transcript;
       } else {
@@ -122,7 +122,7 @@ export class GoogleVoiceChatManager implements VoiceChatManager {
   }
 
   async closeVoiceChat() {
-    console.log("closing voice chat...");
+    console.log("[Google voice chat] closing voice chat...");
     this._ws?.close();
     this._processor?.disconnect();
     this._audioContext?.close();
@@ -135,16 +135,16 @@ export class GoogleVoiceChatManager implements VoiceChatManager {
   }
 
   async muteInputAudio() {
-    console.log("Muting microphone...");
+    console.log("[Google voice chat] Muting microphone...");
     if (!this._stream) return;
     this._stream.getAudioTracks().forEach((track) => {
       track.enabled = false;
     });
-    console.log("Microphone muted");
+    console.log("[Google voice chat] Microphone muted");
   }
 
   async unmuteInputAudio() {
-    console.log("Enabling microphone...");
+    console.log("[Google voice chat] Enabling microphone...");
     if (!this._stream) return;
     this._stream.getAudioTracks().forEach((track) => (track.enabled = true));
     console.log("Microphone enabled");

@@ -104,7 +104,7 @@ const LEAChatInput = ({
           {
             inputTranscript: async (transcript, isChunk, isFinal) => {
               if (isFinal) {
-                console.log("FINAL CHUNK: ", transcript);
+                console.log("[Lea Chat Input] FINAL CHUNK: ", transcript);
                 if (onTextSubmit) {
                   onTextSubmit(transcript);
                 }
@@ -120,6 +120,9 @@ const LEAChatInput = ({
 
   useEffect(() => {
     handleMicMuted(chatMode || micMuted);
+    return () => {
+      handleMicMuted(!(chatMode || micMuted));
+    };
   }, [chatMode, micMuted]);
 
   if (isInPipMode) {
@@ -211,7 +214,7 @@ const LEAChatInput = ({
               <X color="black" />
             </View>
           </TouchableOpacity>
-          <PiPButton />
+          {/* <PiPButton /> */}
         </View>
       )}
     </View>

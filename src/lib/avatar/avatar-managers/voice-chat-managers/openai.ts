@@ -14,8 +14,9 @@ export class OpenAIVoiceChatManager implements VoiceChatManager {
   private _talkManager: TalkManager;
   private _speechIsFinal: boolean = true;
   private _transcript: string = "";
-  private _pc: RTCPeerConnection | null;
-  private _dc: RTCDataChannel | null;
+  private _lastChunk: string = "";
+  private static _pc: RTCPeerConnection | null;
+  private static _dc: RTCDataChannel | null;
   private _langIn: string = "en-US";
   private _userId: string;
 
@@ -29,8 +30,8 @@ export class OpenAIVoiceChatManager implements VoiceChatManager {
     this._geminiResponseManager = geminiResponseManager;
     this._talkManager = talkManager;
     this._heygenSpeechManager = heygenSpeechManager;
-    this._pc = null;
-    this._dc = null;
+    OpenAIVoiceChatManager._pc = null;
+    OpenAIVoiceChatManager._dc = null;
     this._langIn = langIn;
     this._userId = userId;
   }
@@ -78,28 +79,31 @@ export class OpenAIVoiceChatManager implements VoiceChatManager {
     },
     sessionId: string,
   ): Promise<void> {
-    console.log("starting voice chat...");
+    console.log("[OpenAI voice chat] starting voice chat...");
     const token = await this._fetchAccessToken();
     if (token.error) {
       console.error("error starting openai voice chat ", token.error.message);
       return;
     }
-    console.log("Successfully fetched voice token:", token.value);
+    console.log(
+      "[OpenAI voice chat] Successfully fetched voice token:",
+      token.value,
+    );
 
     const mic = await mediaDevices.getUserMedia({ audio: true });
     const session = new TranscriptionSession(token.value.token);
     // const session = new TranscriptionSession(apiKey!); // const session = new TranscriptionSession(token.value.token);
 
     session.onconnectionstatechange = (state) => {
-      console.log("WebRTC connection state:", state);
+      console.log("[OpenAI voice chat] WebRTC connection state:", state);
     };
 
     session.onerror = (e) => {
-      console.error("Session error:", e);
+      console.error("[OpenAI voice chat] Session error:", e);
     };
 
     session.onmessage = async (msg) => {
-      console.log("Voice message:", msg["type"]);
+      console.log("[OpenAI voice chat] Voice message:", msg["type"]);
       let isChunk: boolean;
       let transcript: string;
       if (msg.type === "conversation.item.input_audio_transcription.delta") {
@@ -110,9 +114,9 @@ export class OpenAIVoiceChatManager implements VoiceChatManager {
       ) {
         isChunk = true;
         transcript = msg.transcript;
-        console.log("CHUNK", transcript);
+        console.log("[OpenAI voice chat] [Chunk]", transcript);
       } else if (msg.type === "input_audio_buffer.speech_started") {
-        console.log("User started speaking");
+        console.log("[OpenAI voice chat] User started speaking");
         this._speechIsFinal = false;
         on.interrupt("", false, false);
         await this._heygenSpeechManager.interrupt(sessionId);
@@ -131,7 +135,10 @@ export class OpenAIVoiceChatManager implements VoiceChatManager {
       on?.inputTranscript(transcript, isChunk, false);
       // console.log(transcript, isChunk);
       if (isChunk) {
-        this._transcript += `${transcript} `;
+        if (transcript !== this._lastChunk) {
+          this._transcript += `${transcript} `;
+          this._lastChunk = transcript;
+        }
       } else {
         return await new Promise((resolve) => {
           setTimeout(async () => {
@@ -155,7 +162,7 @@ export class OpenAIVoiceChatManager implements VoiceChatManager {
       }
       const postTalkTimestamp = Date.now();
       const talkCost = postTalkTimestamp - preTalkTimestamp;
-      console.log("TIMING", {
+      console.log("[OpenAI voice chat] [Timing]", {
         duration: talkCost,
       });
       if (speakResponse.state !== "final" || !this._speechIsFinal) {
@@ -169,28 +176,28 @@ export class OpenAIVoiceChatManager implements VoiceChatManager {
 
     await session.startTranscription(mic);
 
-    console.log("OpenAI transcription session started.");
+    console.log("[OpenAI voice chat] OpenAI transcription session started.");
   }
 
   async closeVoiceChat(): Promise<void> {
-    this._dc?.close();
-    this._pc?.close();
-    this._dc = null;
-    this._pc = null;
-    console.log("OpenAI voice chat closed.");
+    OpenAIVoiceChatManager._dc?.close();
+    OpenAIVoiceChatManager._pc?.close();
+    OpenAIVoiceChatManager._dc = null;
+    OpenAIVoiceChatManager._pc = null;
+    console.log("[OpenAI voice chat] OpenAI voice chat closed.");
   }
 
   async muteInputAudio(): Promise<void> {
-    this._pc?.getSenders().forEach((sender) => {
+    OpenAIVoiceChatManager._pc?.getSenders().forEach((sender) => {
       if (sender.track) sender.track.enabled = false;
     });
-    console.log("Input audio muted.");
+    console.log("[OpenAI voice chat] Input audio muted.");
   }
 
   async unmuteInputAudio(): Promise<void> {
-    this._pc?.getSenders().forEach((sender) => {
+    OpenAIVoiceChatManager._pc?.getSenders().forEach((sender) => {
       if (sender.track) sender.track.enabled = true;
     });
-    console.log("Input audio unmuted.");
+    console.log("[OpenAI voice chat] Input audio unmuted.");
   }
 }
