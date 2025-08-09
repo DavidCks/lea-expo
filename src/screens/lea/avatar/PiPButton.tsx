@@ -3,8 +3,9 @@ import { cn } from "@/src/utils/cn";
 import ExpoPip from "expo-pip";
 import { Minimize2 } from "lucide-react-native";
 import { useState } from "react";
-import { View } from "react-native";
+import { Dimensions, View } from "react-native";
 import { Button } from "react-native-paper";
+import BackgroundTimer from "react-native-background-timer";
 
 export function PiPButton({ className }: { className?: string }) {
   const { isInPipMode } = ExpoPip.useIsInPip();
@@ -31,24 +32,25 @@ export function PiPButton({ className }: { className?: string }) {
             }}
             onPress={() => {
               const params = {
-                width: 200,
-                height: 300,
+                width: 143,
+                height: 213,
                 seamlessResizeEnabled: false,
-                sourceRectHint: {
-                  top: 0,
-                  right: 200,
-                  bottom: 300,
-                  left: 0,
-                },
               };
+              PlayerController.set({
+                pipWidth: params.width,
+                pipHeight: params.height,
+                keyboardVisible: false,
+                isInPipMode: true,
+              });
               ExpoPip.setPictureInPictureParams(params);
-              setTimeout(() => {
+              BackgroundTimer.setTimeout(() => {
+                console.log("[PiPButton] updating player dimensions");
                 PlayerController.set({
                   pipWidth: "100%",
                   pipHeight: "100%",
-                  keyboardVisible: false,
-                  isInPipMode: true,
                 });
+              }, 2000);
+              setTimeout(() => {
                 ExpoPip.enterPipMode(params);
               }, 100);
             }}

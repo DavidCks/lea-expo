@@ -47,14 +47,14 @@ export class TalkManager {
     return await new Promise((resolve) => {
       this.resolvePendingTalk = resolve;
 
-      if (this.isTalking || sinceLast < 200) {
+      if (this.isTalking || sinceLast < 300) {
         console.log(`[talk] [debounce] debouncing request:`, args.text);
         console.log(
           `[talk] [debounce] debouncing request reason:`,
           this.isTalking
             ? "is talking"
-            : sinceLast < 200
-              ? "less than 200ms since last"
+            : sinceLast < 300
+              ? "less than 300ms since last"
               : "unknonw reason (investigate)",
         );
         console.log(
@@ -63,9 +63,13 @@ export class TalkManager {
 
         if (this.talkTimer) {
           clearTimeout(this.talkTimer);
-          console.log(`[talk] [debounce]  Cleared existing debounce timers`);
+          console.log(`[talk] [debounce] Cleared existing debounce timer`);
         }
 
+        console.log(
+          `[talk] [debounce] creating new debouce timer with args:`,
+          this.pendingTalkArgs,
+        );
         this.talkTimer = setTimeout(() => {
           this.talkTimer = null;
           const latestArgs = this.pendingTalkArgs!;
@@ -74,7 +78,7 @@ export class TalkManager {
             latestArgs[0].text,
           );
           this._performTalk(...latestArgs).then(this.resolvePendingTalk!);
-        }, 200);
+        }, 300);
       } else {
         console.log(`[talk] Executing immediately`);
         this._performTalk(

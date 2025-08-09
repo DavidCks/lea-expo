@@ -46,7 +46,10 @@ class PlayerControllerBase {
   }
 
   public static set(state: Partial<PlayerState>) {
-    PlayerControllerBase.state.set({ ...PlayerControllerBase.state, ...state });
+    PlayerControllerBase.state.set({
+      ...PlayerControllerBase.state.peek(),
+      ...state,
+    });
   }
 }
 

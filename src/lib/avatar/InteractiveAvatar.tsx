@@ -9,10 +9,11 @@ import {
   DimensionValue,
   Keyboard,
   KeyboardEvent,
+  NativeMethods,
   useWindowDimensions,
 } from "react-native";
 import ExpoPip from "expo-pip";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, Component } from "react";
 
 import { AVATARS } from "@/src/lib/avatar/constants";
 import { chatModeNotifier } from "@/src/screens/lea/state/chatMode";
@@ -31,6 +32,8 @@ import Animated, { useSharedValue } from "react-native-reanimated";
 import { smooth } from "@components/animated/fade-in";
 import { RNSB } from "@/src/controllers/supabase";
 import { cn } from "@/src/utils/cn";
+import { PlayerController } from "./PlayerController";
+import { RTCVideoViewProps } from "@livekit/react-native-webrtc";
 export default function InteractiveAvatar({
   onLoad,
   onSessionEnd,
@@ -428,29 +431,22 @@ const Player = ({
     audio: (TrackReference & { track: RemoteTrack }) | null;
   };
 }) => {
-  // useEffect(() => {
-  //   if (mediaSource.audio) {
-  //     mediaSource.audio.track.start();
-  //     mediaSource.audio.track.setMuted(false);
-  //   }
-  //   return () => {
-  //     if (mediaSource.audio) {
-  //       mediaSource.audio.track.setMuted(true);
-  //       mediaSource.audio.track.stop();
-  //     }
-  //   };
-  // }, [mediaSource.audio]);
-  const { isInPipMode } = ExpoPip.useIsInPip();
   const videoOpacity = useSharedValue(0);
   const dimensions = useWindowDimensions();
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const playerSize = PlayerController.useComputedSize();
+  const keyboardVisible = PlayerController.use("keyboardVisible");
+  const isInPipMode = PlayerController.use("isInPipMode");
+  const videoRef = useRef<
+    (Component<RTCVideoViewProps> & NativeMethods) | null
+  >(null);
 
+  console.log("[Player] ", dimensions);
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () =>
-      setKeyboardVisible(true),
+      PlayerController.state.keyboardVisible.set(true),
     );
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () =>
-      setKeyboardVisible(false),
+      PlayerController.state.keyboardVisible.set(false),
     );
 
     return () => {
@@ -464,26 +460,35 @@ const Player = ({
       videoOpacity.value = smooth(1, 33);
     }, 500);
   }, []);
-  console.log(dimensions.height);
+
   return (
     <Animated.View
       style={{
         opacity: videoOpacity,
       }}
-      className="h-full w-full flex-1 flex-col-reverse"
+      className={cn(
+        "h-full w-full flex-1",
+        isInPipMode ? "flex-col" : "flex-col-reverse",
+      )}
     >
       <VideoTrack
+        ref={videoRef}
         trackRef={mediaSource.video}
         style={{
           display: "flex",
           flex: 1,
-          height:
-            keyboardVisible || isInPipMode
+          height: playerSize.height,
+          maxHeight: isInPipMode
+            ? playerSize.height
+            : keyboardVisible
               ? "100%"
-              : (`${((640 / dimensions.height) * 100).toFixed(2)}%` as DimensionValue),
-          maxHeight: keyboardVisible || isInPipMode ? "100%" : "90%",
-          minHeight: keyboardVisible || isInPipMode ? "100%" : "70%",
-          width: "100%",
+              : "90%",
+          minHeight: isInPipMode
+            ? playerSize.height
+            : keyboardVisible
+              ? "100%"
+              : "70%",
+          width: playerSize.width,
           paddingBottom: !isInPipMode ? 100 : 0,
         }}
       />

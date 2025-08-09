@@ -442,9 +442,9 @@ export class Avatar {
 
       console.log(
         "[avatar] Stream unpublished: ",
-        publication,
+        publication.kind,
         "for participant: ",
-        participant,
+        participant.identity,
       );
       this._endHeygenSession(sessionId);
       on.disconnect("trackUnpublished", undefined, publication, participant);

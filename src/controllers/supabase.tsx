@@ -26,7 +26,7 @@ import {
 } from "../env-vars";
 
 export class RNSB {
-  private static client: ReturnType<typeof createClient>;
+  public static client: ReturnType<typeof createClient>;
   private static _authSubscription: Subscription | null = null;
   public static config = {
     creds: {
@@ -75,16 +75,32 @@ export class RNSB {
   }
   constructor() {}
 
-  public static getBackendUrl(path: string) {
+  public static getBackendUrl(
+    path: string,
+    {
+      ssl,
+      port,
+      forceProd,
+    }: {
+      ssl?: boolean;
+      port?: 3000;
+      forceProd?: boolean;
+    } = {
+      ssl: false,
+      port: 3000,
+      forceProd: false,
+    },
+  ) {
     let base: string = "";
     const debuggerHost = Constants.expoConfig?.hostUri;
     if (
       (process.env.EXPO_PUBLIC_ENVIRONMENT ?? EXPO_PUBLIC_ENVIRONMENT) ===
         "local" &&
-      debuggerHost
+      debuggerHost &&
+      !forceProd
     ) {
       const ipAddress = debuggerHost.split(":")[0];
-      base = `http://${ipAddress}:3000`;
+      base = `http${ssl ? "s" : ""}://${ipAddress}:${port ? port : "3000"}`;
       console.log("[Supabase] using local backend with ip:", base);
     } else if (
       process.env.EXPO_PUBLIC_PROD_BACKEND_URL ??

@@ -35,6 +35,7 @@ import ExpoPip from "expo-pip";
 import { cn } from "@/src/utils/cn";
 import { Fullscreen, Info } from "lucide-react-native";
 import { Button } from "react-native-paper";
+import { PlayerController } from "@/src/lib/avatar/PlayerController";
 // import Credits from "./Credits";
 // import BuyMoreCredits from "./BuyCredits";
 
@@ -62,7 +63,7 @@ const LeaImpl = () => {
   const userWallets = useMutation({
     mutationFn: RNSB.getCurrentUserWalletsData,
   });
-  const { isInPipMode } = ExpoPip.useIsInPip();
+  const isInPipMode = PlayerController.useIsInPip();
   const addMessage = leaMessagesNotifier((s) => s.addValue);
   const updateLastOrAddRemoteValue = leaMessagesNotifier(
     (s) => s.updateLastOrAddRemoteValue,
@@ -258,7 +259,7 @@ const LeaImpl = () => {
       }}
     >
       {/* <TopBarWalletMenu /> */}
-      <View className="flex-col-reverse relative flex-1">
+      <View className={cn("relative flex-1", "flex-col-reverse")}>
         <View className="top-4 absolute left-6">
           {!isInPipMode && (
             <SidebarMenu
@@ -269,12 +270,12 @@ const LeaImpl = () => {
           )}
         </View>
         <View className="top-4 absolute right-6">
-          <Credits />
+          {!isInPipMode && <Credits />}
         </View>
         {/* Chat Panel - Bottom on mobile, left on desktop */}
         <View
           style={{ opacity: isInPipMode ? 0 : 1 }}
-          className="absolute w-full h-1/4 top-14 flex-col z-10"
+          className={"absolute w-full h-1/4 top-14 flex-col z-10"}
         >
           <View className="h-full overflow-hidden w-full">
             <View className="w-full rounded-4xl flex-col h-full">
@@ -340,7 +341,10 @@ const LeaImpl = () => {
                 backgroundColor:
                   colorScheme === "dark" ? "rgb(1,0,1)" : "rgb(251,250,251)",
               }}
-              className="w-full h-full items-center justify-center"
+              className={cn(
+                "w-full h-full justify-center",
+                isInPipMode ? "items-start" : "items-center",
+              )}
             >
               <View className="w-full max-w-full h-full overflow-hidden">
                 <InteractiveAvatar

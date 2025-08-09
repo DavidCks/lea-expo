@@ -105,7 +105,7 @@ export class HeygenSpeechManager {
           }
           setTimeout(() => {
             onSpeakStart(taskResponse, text);
-          }, 500);
+          }, 100);
           resolve({
             value: text,
             source: source,
@@ -130,7 +130,7 @@ export class HeygenSpeechManager {
     HeygenSpeechManager.pendingSessionId = sessionId;
 
     // If we're in cooldown or in-flight, defer the call
-    if (HeygenSpeechManager.isInterrupting || sinceLast < 500) {
+    if (HeygenSpeechManager.isInterrupting || sinceLast < 100) {
       console.log("[HeygenSpeechManager] Interrupt in flight. debouncing...");
       if (HeygenSpeechManager.interruptTimer) {
         console.log("[HeygenSpeechManager] Clearing interrupt timer...");
@@ -149,7 +149,7 @@ export class HeygenSpeechManager {
             "[HeygenSpeechManager] Cancelling debounced interrupt because there is no pending session id...",
           );
         }
-      }, 500);
+      }, 100);
 
       return {
         value: undefined,

@@ -29,6 +29,7 @@ import { RNSB } from "@/src/controllers/supabase";
 import ExpoPip from "expo-pip";
 import { Button } from "react-native-paper";
 import { cn } from "@/src/utils/cn";
+import { PiPButton } from "./PiPButton";
 
 const LEAChatInput = ({
   avatar,
@@ -214,41 +215,12 @@ const LEAChatInput = ({
               <X color="black" />
             </View>
           </TouchableOpacity>
-          {/* <PiPButton /> */}
+          <PiPButton />
         </View>
       )}
     </View>
   );
 };
-
-function PiPButton({ className }: { className?: string }) {
-  const { isInPipMode } = ExpoPip.useIsInPip();
-  const [automaticEnterEnabled, setAutomaticEnterEnabled] = useState(false);
-
-  if (isInPipMode) {
-    return null;
-  }
-
-  return (
-    <View className={cn("justify-center items-center", className)}>
-      {
-        <>
-          <Button
-            style={[styles.micButton]}
-            onPress={() => {
-              ExpoPip.enterPipMode({
-                width: 200,
-                height: 300,
-              });
-            }}
-          >
-            <Minimize2 />
-          </Button>
-        </>
-      }
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   container: {
